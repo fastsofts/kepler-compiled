@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset='UTF-8' />
+    <title>kepler.gl demo</title>
+    <link rel="stylesheet" href="//d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
+    <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
+    <style type="text/css">
+       body {margin: 0; padding: 0; overflow: hidden;}
+       p {
+          margin-top: 0;
+       }
+       .button{
+          font-size:12px; 
+       } 
+       .wrapper{
+          width:100vw;
+          height:100vh
+       }
+    </style>
+  </head>
+  <body>
+    <script>
+       let key = "";
+       let gdata = {};
+       let json = {};
+       function updatedata(){
+           try{ 
+              let iframeobj = window;
+              checked = document.querySelector("#props").querySelectorAll('input[type="checkbox"]:checked');
+              let checks = "";
+              for (var checkbox of checked) {
+                   checks += checkbox.value + ";";
+              }
+              shvalue = document.querySelector("#props").querySelector( 'input[name="shadevalues"]:checked').value;
+              window.loadExternalShadingKeyData(key);
+              window.loadExternalPropsData(checks);
+              window.loadExternalShadingSortData(shvalue);
+              window.loadExternalJSONData(gdata);
+           }catch(e){
+              console.log("Not a valid JSON");
+              console.log(e);
+           }
+       }
+       window.onload = function() {
+       localStorage.removeItem("cprops");
+       const url = new URL(window.location.href);
+       const sr =  url.searchParams;
+       let shvals = sr.get('shade_large_vals');
+       key = sr.get('key');
+       if (!key || key === null || key == undefined){
+           key = "";
+       }
+       json = sr.get('json');
+       if (!json || json === null || json === undefined){
+           json = {};
+       }else{
+           json = JSON.parse(json);
+       }
+        
+       function fetchJSON(url) {
+          return fetch(url)
+           .then(function(response) {
+              return response.json();
+           });
+       } 
+
+       function addScript( src ) {
+         var s = document.createElement( 'script' );
+         s.setAttribute( 'src', src );
+         s.setAttribute('type','application/javascript');
+         document.body.appendChild( s );
+       }
+       addScript("./build/bundle.js");
+       addScript("./build/0.bundle.js");
+       for (i = 2; i < 15; i++){
+            addScript("./build/"+i+".bundle.js");
+       } 
+
+       if (!json){
+           fetchJSON('./data/suburbData-SDscheamExtract-LGAs Aus 2022-02.json')
+            .then(function(data) { 
+              var keys = {};
+              gdata = data;
+              gdata.features.forEach((feat)=>{
+                 Object.keys(feat.properties).forEach((key)=>{
+                    keys[key] = true;
+                 });
+              });
+              let pkeys = [];
+              document.querySelector("#props").innerHTML = "";
+              Object.keys(keys).forEach((key)=>{
+                 pkeys.push(key); 
+              });
+              let html = "";
+              pkeys.forEach((pkey)=>{
+                 html += `<input id = "opt_${pkey}" name = "opt_${pkey}" value="${pkey}" checked type = "checkbox"><label>${pkey}</label>`
+              }); 
+              html += "<div>";
+              if (shvals === "lighter"){
+                  html += `<input id = "lighter" name = "shadevalues" value="lighter" checked type = "radio"><label>Lighter</label>`
+              }else{
+                  html += `<input id = "lighter" name = "shadevalues" value="lighter" type = "radio"><label>Lighter</label>`
+              }
+              if (shvals === "darker" || !shvals){
+                 html += `<input id = "lighter" name = "shadevalues" value="darker" checked type = "radio"><label>Darker</label>`
+              }else{
+                 html += `<input id = "lighter" name = "shadevalues" value="darker" type = "radio"><label>Darker</label>`
+              } 
+              html += "</div>";
+              html += "<div><button onclick = 'updatedata()'>Plot</button></div>"
+              document.querySelector("#props").innerHTML = html;
+            });
+         }else{
+              var keys = {};
+              gdata = JSON.parse(json);
+              gdata.features.forEach((feat)=>{
+                 Object.keys(feat.properties).forEach((key)=>{
+                    keys[key] = true;
+                 });
+              });
+              let pkeys = [];
+              document.querySelector("#props").innerHTML = "";
+              Object.keys(keys).forEach((key)=>{
+                 pkeys.push(key); 
+              });
+              let html = "";
+              pkeys.forEach((pkey)=>{
+                 html += `<input id = "opt_${pkey}" name = "opt_${pkey}" value="${pkey}" checked type = "checkbox"><label>${pkey}</label>`
+              }); 
+              html += "<div>";
+              if (shvals === "lighter"){
+                  html += `<input id = "lighter" name = "shadevalues" value="lighter" checked type = "radio"><label>Lighter</label>`
+              }else{
+                  html += `<input id = "lighter" name = "shadevalues" value="lighter" type = "radio"><label>Lighter</label>`
+              }
+              if (shvals === "darker" || !shvals){
+                 html += `<input id = "lighter" name = "shadevalues" value="darker" checked type = "radio"><label>Darker</label>`
+              }else{
+                 html += `<input id = "lighter" name = "shadevalues" value="darker" type = "radio"><label>Darker</label>`
+              } 
+              html += "</div>";
+              html += "<div><button onclick = 'updatedata()'>Plot</button></div>"
+              document.querySelector("#props").innerHTML = html;
+         }
+       }
+    </script>
+    <div class = "wrapper">
+       <div id="root" style = "width:100vw;height:80vh">
+       </div>
+       <div id = "json" style = "width:100vw;height:20vh;display:flex;">
+           <div id = "props">
+
+           </div>
+       </div>
+    </div>
+  </body>
+</html>
